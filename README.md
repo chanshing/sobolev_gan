@@ -1,1 +1,1 @@
-![8 Gaussians](https://imgur.com/a/Lrub3e5)
+![8 Gaussians](https://i.imgur.com/3RtQ8kn.gifv)
