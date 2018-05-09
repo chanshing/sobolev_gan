@@ -42,9 +42,9 @@ if __name__ == '__main__':
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size,
                                              shuffle=True, num_workers=2, drop_last=True)
 
-    # Resnets from WGAN-GP paper
+    # Resnet and Convnet from WGAN-GP paper
     netG = models.Resnet_G().to(device)
-    netD = models.Resnet_D().to(device)
+    netD = models.Convnet_D().to(device)
 
     NZ = 128
     z = torch.FloatTensor(args.batch_size, NZ).to(device)

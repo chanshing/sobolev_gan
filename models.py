@@ -77,9 +77,9 @@ class Resnet_G(nn.Module):      # https://github.com/caogang/wgan-gp/blob/master
         return output.view(-1, 3, 32, 32)
 
 
-class Resnet_D(nn.Module):      # https://github.com/caogang/wgan-gp/blob/master/gan_cifar10.py
+class Convnet_D(nn.Module):      # https://github.com/caogang/wgan-gp/blob/master/gan_cifar10.py
     def __init__(self, hidden_dim=128):
-        super(Resnet_D, self).__init__()
+        super(Convnet_D, self).__init__()
         self.hidden_dim = hidden_dim
 
         main = nn.Sequential(

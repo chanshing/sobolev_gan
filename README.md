@@ -12,7 +12,7 @@ G and D are fully connected layers
 ### CIFAR10
 `python gan_cifar10.py [--options]`
 
-G and D are resnets like the one in WGAN-GP paper [https://arxiv.org/abs/1704.00028](https://arxiv.org/abs/1704.00028)
+G is a Resnet like the one in WGAN-GP paper [https://arxiv.org/abs/1704.00028](https://arxiv.org/abs/1704.00028)
 
 Generated samples (300+ epochs)
 
