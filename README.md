@@ -14,4 +14,10 @@ G and D are fully connected layers
 
 G and D are resnets like the one in WGAN-GP paper [https://arxiv.org/abs/1704.00028](https://arxiv.org/abs/1704.00028)
 
-*TODO:* add gif
+Generated samples (300+ epochs)
+
+![CIFAR10 generated0](https://i.imgur.com/g2gUziB.png)
+![CIFAR10 generated1](https://i.imgur.com/Fi8VAnU.png)
+
+![CIFAR10 generated2](https://i.imgur.com/OGVrCSL.png)
+![CIFAR10 generated3](https://i.imgur.com/0o1ak7s.png)
