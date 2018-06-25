@@ -1,17 +1,17 @@
 import torch.nn as nn
 
 class FC_G(nn.Module):
-    def __init__(self, hidden_dim=512):
+    def __init__(self, idim=2, odim=2, hidden_dim=512):
         super(FC_G, self).__init__()
 
         main = nn.Sequential(
-            nn.Linear(2, hidden_dim),
+            nn.Linear(idim, hidden_dim),
             nn.ReLU(True),
             nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(True),
             nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(True),
-            nn.Linear(hidden_dim, 2),
+            nn.Linear(hidden_dim, odim),
         )
         self.main = main
 
@@ -20,11 +20,11 @@ class FC_G(nn.Module):
         return output
 
 class FC_D(nn.Module):
-    def __init__(self, hidden_dim=512):
+    def __init__(self, idim=2, hidden_dim=512):
         super(FC_D, self).__init__()
 
         main = nn.Sequential(
-            nn.Linear(2, hidden_dim),
+            nn.Linear(idim, hidden_dim),
             nn.ReLU(True),
             nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(True),
