@@ -43,8 +43,9 @@ class Logger(object):
         self.netG = netG
         self.outf = outf
         self.nfreq = nfreq
-        self.loss = []
+        self.loss, self.alpha, self.omega = [], [], []
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.z = torch.randn(512, 2).to(self.device)  # for plot
 
     def plot(self, i):
         fig, ax = plt.subplots()
@@ -52,9 +53,8 @@ class Logger(object):
         ax.set_ylim(-3,3)
 
         # --- distribution of G
-        z = torch.randn(512, 2).to(self.device)
         with torch.no_grad():
-            x = netG(z).detach().cpu().numpy().squeeze()
+            x = netG(self.z).detach().cpu().numpy().squeeze()
         ax.scatter(x[:,0], x[:,1], alpha=0.1)
 
         # --- contour of D
@@ -70,17 +70,26 @@ class Logger(object):
         plt.close(fig)
 
         # --- loss
-        fig, ax = plt.subplots()
-        ax.set_ylabel('IPM estimate')
-        ax.set_xlabel('iteration')
-        ax.semilogy(self.loss)
+        fig, axs = plt.subplots(3, 1, sharex=True)
+        axs[0].set_ylabel('IPM')
+        axs[0].semilogy(self.loss)
+        axs[1].set_ylabel(r'$\alpha$')
+        axs[1].plot(self.alpha)
+        axs[2].set_ylabel(r'$\omega$')
+        axs[2].plot(self.omega)
+        axs[2].set_xlabel('iteration')
         fig.savefig('{}/loss.png'.format(self.outf))
         plt.close(fig)
 
-    def dump(self, i, loss):
+    def dump(self, i, loss, alpha, omega):
         self.loss.append(loss)
+        self.alpha.append(alpha)
+        self.omega.append(omega)
         if i % self.nfreq == 0:
             self.plot(i)
+        np.save('{}/loss.npy'.format(args.outf), np.array(self.loss))
+        np.save('{}/alpha.npy'.format(args.outf), np.array(self.alpha))
+        np.save('{}/omega.npy'.format(args.outf), np.array(self.omega))
 
 
 if __name__ == '__main__':
@@ -90,8 +99,8 @@ if __name__ == '__main__':
     parser.add_argument('--niter', type=int, default=5000)
     parser.add_argument('--niterD', type=int, default=5, help='no. updates of D per update of G')
     parser.add_argument('--lr', type=float, default=1e-4, help='learning rate')
-    parser.add_argument('--alpha', type=float, default=0.1, help='Lagrange multiplier')
-    parser.add_argument('--rho', type=float, default=1e-5, help='quadratic weight penalty')
+    parser.add_argument('--alpha', type=float, default=1.0, help='Lagrange multiplier')
+    parser.add_argument('--rho', type=float, default=1e-3, help='quadratic weight penalty')
     args = parser.parse_args()
 
     cudnn.benchmark = True
@@ -107,8 +116,6 @@ if __name__ == '__main__':
 
     z = torch.FloatTensor(args.batch_size, 2).to(device)
     alpha = torch.tensor(args.alpha).to(device)
-    alpha.requires_grad_()      # we will minimize this
-    mone = torch.tensor(-1.0).to(device)
 
     optimizerG = optim.Adam(netG.parameters(), lr=args.lr, betas=(0.5, 0.9), amsgrad=True)
     optimizerD = optim.Adam(netD.parameters(), lr=args.lr, betas=(0.5, 0.9), amsgrad=True)
@@ -136,13 +143,10 @@ if __name__ == '__main__':
             omega = 0.5*(gradD_real.view(gradD_real.size(0), -1).pow(2).sum(dim=1).mean() +
                          gradD_fake.view(gradD_fake.size(0), -1).pow(2).sum(dim=1).mean())
 
-            loss = lossE + alpha * (1. - omega) - 0.5 * args.rho * (omega - 1.).pow(2)
-            loss.backward(mone)
+            loss = -lossE - alpha*(1.0 - omega) + 0.5*args.rho*(1.0 - omega).pow(2)
+            loss.backward()
             optimizerD.step()
-            with torch.no_grad():
-                # minimize manually, note we feed 'mone' in backward()
-                alpha += args.rho * alpha.grad
-                alpha.grad.zero_()
+            alpha -= args.rho*(1.0 - omega.item())
 
         # --- train G
         optimizerG.zero_grad()
@@ -152,7 +156,7 @@ if __name__ == '__main__':
         loss.backward()
         optimizerG.step()
 
-        logger.dump((i+1), lossE.item())
+        logger.dump((i+1), lossE.item(), alpha.item(), omega.item())
 
         if (i+1) % 100 == 0:
             print "[{}/{}] loss: {:.3f}, alpha: {:.3f}, omega: {:.3f}".format((i+1), args.niter, lossE.item(), alpha.item(), omega.item())
