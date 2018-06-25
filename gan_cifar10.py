@@ -49,8 +49,6 @@ if __name__ == '__main__':
     NZ = 128
     z = torch.FloatTensor(args.batch_size, NZ).to(device)
     alpha = torch.tensor(args.alpha).to(device)
-    alpha.requires_grad_()      # we will minimize this
-    mone = torch.tensor(-1.0).to(device)
 
     optimizerG = optim.Adam(netG.parameters(), lr=args.lr, betas=(0.5, 0.9), amsgrad=True)
     optimizerD = optim.Adam(netD.parameters(), lr=args.lr, betas=(0.5, 0.9), amsgrad=True)
@@ -77,13 +75,10 @@ if __name__ == '__main__':
                 omega = 0.5*(gradD_real.view(gradD_real.size(0), -1).pow(2).sum(dim=1).mean() +
                              gradD_fake.view(gradD_fake.size(0), -1).pow(2).sum(dim=1).mean())
 
-                loss = lossE + alpha * (1. - omega) - 0.5 * args.rho * (omega - 1.).pow(2)
-                loss.backward(mone)
+                loss = -lossE - alpha*(1.0 - omega) + 0.5*args.rho*(1.0 - omega).pow(2)
+                loss.backward()
                 optimizerD.step()
-                with torch.no_grad():
-                    # minimize manually, note we feed 'mone' in backward()
-                    alpha += args.rho * alpha.grad
-                    alpha.grad.zero_()
+                alpha -= args.rho*(1.0 - omega.item())
 
             # --- train G
             optimizerG.zero_grad()
