@@ -28,7 +28,7 @@ def build_dataloader(batch_size):  # mix of 8 Gaussians (https://github.com/igul
     centers = [(scale * x, scale * y) for x, y in centers]
     while True:
         dataset = []
-        for i in xrange(batch_size):
+        for _ in xrange(batch_size):
             point = np.random.randn(2) * .02
             center = random.choice(centers)
             point[0] += center[0]
@@ -39,8 +39,9 @@ def build_dataloader(batch_size):  # mix of 8 Gaussians (https://github.com/igul
         yield dataset
 
 class Logger(object):
-    def __init__(self, netG, outf, nfreq=500):
+    def __init__(self, netG, netD, outf, nfreq=500):
         self.netG = netG
+        self.netD = netD
         self.outf = outf
         self.nfreq = nfreq
         self.loss, self.alpha, self.omega = [], [], []
@@ -54,7 +55,7 @@ class Logger(object):
 
         # --- distribution of G
         with torch.no_grad():
-            x = netG(self.z).detach().cpu().numpy().squeeze()
+            x = self.netG(self.z).detach().cpu().numpy().squeeze()
         ax.scatter(x[:,0], x[:,1], alpha=0.1)
 
         # --- contour of D
@@ -63,7 +64,7 @@ class Logger(object):
         x = np.hstack((x1.reshape(-1,1), x2.reshape(-1,1)))
         x = torch.tensor(x, dtype=torch.float32).to(self.device)
         with torch.no_grad():
-            y = netD(x).detach().cpu().numpy().squeeze()
+            y = self.netD(x).detach().cpu().numpy().squeeze()
         ax.contour(x1, x2, y.reshape(x1.shape))
 
         fig.savefig('{}/x_{}.png'.format(self.outf, i))
@@ -87,22 +88,11 @@ class Logger(object):
         self.omega.append(omega)
         if i % self.nfreq == 0:
             self.plot(i)
-        np.save('{}/loss.npy'.format(args.outf), np.array(self.loss))
-        np.save('{}/alpha.npy'.format(args.outf), np.array(self.alpha))
-        np.save('{}/omega.npy'.format(args.outf), np.array(self.omega))
+        np.save('{}/loss.npy'.format(self.outf), np.array(self.loss))
+        np.save('{}/alpha.npy'.format(self.outf), np.array(self.alpha))
+        np.save('{}/omega.npy'.format(self.outf), np.array(self.omega))
 
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--outf', default='tmp/8gauss', help='where to save results')
-    parser.add_argument('--batch_size', type=int, default=256)
-    parser.add_argument('--niter', type=int, default=5000)
-    parser.add_argument('--niterD', type=int, default=5, help='no. updates of D per update of G')
-    parser.add_argument('--lr', type=float, default=1e-4, help='learning rate')
-    parser.add_argument('--alpha', type=float, default=1.0, help='Lagrange multiplier')
-    parser.add_argument('--rho', type=float, default=1e-3, help='quadratic weight penalty')
-    args = parser.parse_args()
-
+def main(args):
     cudnn.benchmark = True
 
     os.system('mkdir -p {}'.format(args.outf))
@@ -120,7 +110,7 @@ if __name__ == '__main__':
     optimizerG = optim.Adam(netG.parameters(), lr=args.lr, betas=(0.5, 0.9), amsgrad=True)
     optimizerD = optim.Adam(netD.parameters(), lr=args.lr, betas=(0.5, 0.9), amsgrad=True)
 
-    logger = Logger(netG, args.outf)
+    logger = Logger(netG, netD, args.outf)
 
     for i in range(args.niter):
 
@@ -160,3 +150,15 @@ if __name__ == '__main__':
 
         if (i+1) % 100 == 0:
             print "[{}/{}] loss: {:.3f}, alpha: {:.3f}, omega: {:.3f}".format((i+1), args.niter, lossE.item(), alpha.item(), omega.item())
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--outf', default='tmp/8gauss', help='where to save results')
+    parser.add_argument('--batch_size', type=int, default=256)
+    parser.add_argument('--niter', type=int, default=5000)
+    parser.add_argument('--niterD', type=int, default=5, help='no. updates of D per update of G')
+    parser.add_argument('--lr', type=float, default=1e-4, help='learning rate')
+    parser.add_argument('--alpha', type=float, default=1.0, help='Lagrange multiplier')
+    parser.add_argument('--rho', type=float, default=1e-3, help='quadratic weight penalty')
+
+    main(parser.parse_args())
