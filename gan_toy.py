@@ -76,7 +76,7 @@ class Logger(object):
         axs[0].semilogy(self.loss)
         axs[1].set_ylabel(r'$\alpha$')
         axs[1].plot(self.alpha)
-        axs[2].set_ylabel(r'$\omega$')
+        axs[2].set_ylabel(r'$\Omega$')
         axs[2].plot(self.omega)
         axs[2].set_xlabel('iteration')
         fig.savefig('{}/loss.png'.format(self.outf))
