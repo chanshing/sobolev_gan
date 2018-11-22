@@ -61,7 +61,7 @@ if __name__ == '__main__':
             for _ in range(args.niterD):
                 optimizerD.zero_grad()
                 x_real = data[0].to(device)
-                x_fake = netG(z.normal_(0,1))
+                x_fake = netG(z.normal_(0,1)).detach()
                 x_real.requires_grad_()  # to compute gradD_real
                 x_fake.requires_grad_()  # to compute gradD_fake
 
@@ -82,7 +82,7 @@ if __name__ == '__main__':
 
             # --- train G
             optimizerG.zero_grad()
-            x_fake = netG(z.normal_(0,1))
+            x_fake = netG(z.normal_(0,1)).detach()
             y_fake = netD(x_fake)
             loss = -y_fake.mean()
             loss.backward()
