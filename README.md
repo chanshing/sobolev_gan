@@ -1,4 +1,4 @@
-# Pytorch implementation of Sobolev GAN [https://arxiv.org/abs/1711.04894](https://arxiv.org/abs/1711.04894)
+# Pytorch implementation of Sobolev GAN [arXiv](https://arxiv.org/abs/1711.04894)
 
 *Requires PyTorch 0.4+*
 
