@@ -54,17 +54,21 @@ class Logger(object):
         ax.set_ylim(-3,3)
 
         # --- distribution of G
+        self.netG.eval()
         with torch.no_grad():
             x = self.netG(self.z).detach().cpu().numpy().squeeze()
         ax.scatter(x[:,0], x[:,1], alpha=0.1)
+        self.netG.train()
 
         # --- contour of D
         x1 = x2 = np.linspace(-3, 3, 128)
         x1, x2 = np.meshgrid(x1, x2)
         x = np.hstack((x1.reshape(-1,1), x2.reshape(-1,1)))
         x = torch.tensor(x, dtype=torch.float32).to(self.device)
+        self.netD.eval()
         with torch.no_grad():
             y = self.netD(x).detach().cpu().numpy().squeeze()
+        self.netD.train()
         ax.contour(x1, x2, y.reshape(x1.shape))
 
         fig.savefig('{}/x_{}.png'.format(self.outf, i))
@@ -119,7 +123,7 @@ def main(args):
             optimizerD.zero_grad()
             data = next(dataloader)
             x_real = torch.tensor(data).to(device)
-            x_fake = netG(z.normal_(0,1))
+            x_fake = netG(z.normal_(0,1)).detach()
             x_real.requires_grad_()  # to compute gradD_real
             x_fake.requires_grad_()  # to compute gradD_fake
 
@@ -140,7 +144,7 @@ def main(args):
 
         # --- train G
         optimizerG.zero_grad()
-        x_fake = netG(z.normal_(0,1))
+        x_fake = netG(z.normal_(0,1)).detach()
         y_fake = netD(x_fake)
         loss = -y_fake.mean()
         loss.backward()
