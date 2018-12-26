@@ -82,7 +82,7 @@ if __name__ == '__main__':
 
             # --- train G
             optimizerG.zero_grad()
-            x_fake = netG(z.normal_(0,1)).detach()
+            x_fake = netG(z.normal_(0,1))
             y_fake = netD(x_fake)
             loss = -y_fake.mean()
             loss.backward()
