@@ -162,7 +162,7 @@ if __name__ == '__main__':
     parser.add_argument('--niter', type=int, default=5000)
     parser.add_argument('--niterD', type=int, default=5, help='no. updates of D per update of G')
     parser.add_argument('--lr', type=float, default=1e-4, help='learning rate')
-    parser.add_argument('--alpha', type=float, default=1.0, help='Lagrange multiplier')
+    parser.add_argument('--alpha', type=float, default=0.0, help='Lagrange multiplier')
     parser.add_argument('--rho', type=float, default=1e-3, help='quadratic weight penalty')
 
     main(parser.parse_args())
